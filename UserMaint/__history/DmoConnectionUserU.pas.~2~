@@ -1,0 +1,127 @@
+unit DmoConnectionUserU;
+
+interface
+
+uses
+  System.SysUtils, System.Classes, Data.DB,
+  Data.Win.ADODB;
+
+type
+  TdmoConnectionUser = class(TDataModule)
+    conUserMaint: TADOConnection;
+    procedure conContactBeforeConnect(Sender: TObject);
+    procedure DataModuleCreate(Sender: TObject);
+    procedure conUserMaintBeforeConnect(Sender: TObject);
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  dmoConnectionUser: TdmoConnectionUser;
+
+implementation
+
+{%CLASSGROUP 'Vcl.Controls.TControl'}
+
+{$R *.dfm}
+
+{ TDmoConnection }
+
+procedure TdmoConnectionUser.conContactBeforeConnect(Sender: TObject);
+var
+  vDatasource:TStringList;
+  ds:Widestring;
+  initString:string;
+begin
+  initString:='Provider=SQLOLEDB.1;Persist Security Info=False;User ID=sa;'
+                  + 'password=1ntelPWD!;Initial Catalog=Contact';
+  if fileexists('concarparts.cfg') then begin
+    vDataSource:=TStringList.Create;
+    vDataSource.LoadFromFile('concarparts.cfg');
+    ds:=vDataSource.Strings[0];
+    freeandnil(vDataSource);
+    conContact.ConnectionString:= initString + ';Data Source=' + ds;
+  end
+  else
+  begin
+    conContact.ConnectionString:= initString + ';Data Source=HARRIER\HARRIER2008R2';
+  end;
+end;
+
+procedure TdmoConnectionUser.conUserMaintBeforeConnect(Sender: TObject);
+var
+  vDatasource:TStringList;
+  ds:Widestring;
+  initString:string;
+begin
+  initString:='Provider=SQLOLEDB.1;Persist Security Info=False;User ID=sa;'
+                  + 'password=1ntelPWD!;Initial Catalog=UserMaint';
+  if fileexists('conusermaint.cfg') then begin
+    vDataSource:=TStringList.Create;
+    vDataSource.LoadFromFile('conusermaint.cfg');
+    ds:=vDataSource.Strings[0];
+    freeandnil(vDataSource);
+    conUserMaint.ConnectionString:= initString + ';Data Source=' + ds;
+  end
+  else
+  begin
+    conUserMaint.ConnectionString:= initString + ';Data Source=HARRIER\HARRIER2008R2';
+  end;
+end;
+
+procedure TdmoConnectionUser.DataModuleCreate(Sender: TObject);
+begin
+  conContact.Connected := True;
+  conUserMaint.Connected := True;
+end;
+
+
+
+//function TdmoConnection.GetNextPK(const TableName: string): Integer;
+//begin
+//  Result := -1;
+//  qryNextPK.Parameters[0].Value := TableName;
+//  qryNextPK.Parameters[1].Value := TableName;
+//  qryNextPK.Open;
+//  try
+//    if not qryNextPK.Eof then
+//      Result := qryNextPK.Fields[0].AsInteger;
+//  finally
+//    qryNextPK.Close;
+//  end;
+//end;
+
+
+//
+//function TdmoConnection.MenExcluded(const UserRoleID: Integer;
+//  sMenName: String): Boolean;
+//Var
+//  s1 : String;
+//begin
+//  Result := False;
+//  qryMenExcluded.Active := False;
+//  s1 := qryMenExcluded.SQL.Strings[0];
+//  qryMenExcluded.Parameters.ParamByName('Param1').Value := UserRoleID;
+//  qryMenExcluded.Parameters.ParamByName('Param2').Value := sMenName;
+////Select UserRoleID, menExcludedDescription FROM vUserAccess Where UserRoleID = :p1 AND MenName = :p2
+//  qryMenExcluded.Active := True;
+//  if qryMenExcluded.RecordCount > 0 then
+//    Result := True;
+//end;
+//
+//function TdmoConnection.Login(const UserName, Password: string): Boolean;
+//begin
+//  qrySysUser.Active := False;
+//  qrySysUser.Parameters.ParamByName('p1').Value := UserName;
+//  qrySysUser.Parameters.ParamByName('p2').Value := Password;
+//  qrySysUser.Active := True;
+//  if qrySysUser.RecordCount = 1 then
+//    Result := True
+//  Else
+//    Result := False;
+//End;
+
+
+End.

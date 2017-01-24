@@ -1,0 +1,17 @@
+object dmUserMaint: TdmUserMaint
+  OldCreateOrder = False
+  Height = 716
+  Width = 969
+  object conUserMaint: TADOConnection
+    ConnectionString = 
+      'Provider=SQLOLEDB.1;Password=!ApTuSeR_4;Persist Security Info=Tr' +
+      'ue;User ID=apt4user;Initial Catalog=UserMaint;Data Source=HARRIE' +
+      'R\HARRIER2008R2;Use Procedure for Prepare=1;Auto Translate=True;' +
+      'Packet Size=4096;Workstation ID=HARRIER;Use Encryption for Data=' +
+      'False;Tag with column collation when possible=False'
+    LoginPrompt = False
+    Provider = 'SQLOLEDB.1'
+    Left = 80
+    Top = 72
+  end
+end

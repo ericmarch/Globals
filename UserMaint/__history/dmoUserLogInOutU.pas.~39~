@@ -1,0 +1,255 @@
+unit dmoUserLogInOutU;
+
+interface
+
+uses
+  System.SysUtils, System.Classes, Data.DB, Data.Win.ADODB;
+
+type
+  TdmoUserLogInOut = class(TDataModule)
+    qrySysUser: TADOQuery;
+    qryUserLog: TADOQuery;
+    qryProgName: TADOQuery;
+    qryUserRole: TADOQuery;
+    ADOCommand1: TADOCommand;
+  private
+    { Private declarations }
+    Procedure SetUserLoginVariables;
+    Function  GetUserRoleID:Integer;
+    Function  GetUserRole:Integer;
+    Procedure SetdbUserLogIN;
+    Procedure SetdbUserLogOUT;
+  public
+    { Public declarations }
+    Function  ReadUserName(const UserName: string): Integer;
+    Function  ReadUserPWD(const UserName, UserPWD: string): Boolean;
+    Function  ExistProgName(sProgName : String):Integer;
+    Procedure SetUserLoggedIn(bLoggedIn : Boolean);
+  end;
+
+var
+  dmoUserLogInOut: TdmoUserLogInOut;
+
+implementation
+
+{%CLASSGROUP 'Vcl.Controls.TControl'}
+
+uses Globals, DmoConnectionUserU;
+
+{$R *.dfm}
+
+{ TdmoUserLogInOut }
+
+function TdmoUserLogInOut.ExistProgName(sProgName: String): Integer;
+begin
+  qryProgName.Active := False;
+  qryProgName.SQL.Clear;
+  qryProgName.SQL.Add('Select * from ProgName WHERE Description = :p1');
+  qryProgName.Parameters.ParamByName('p1').Value := sProgName;
+  Try
+    qryProgName.Active := True;
+  Finally
+    if qryProgName.RecordCount = 1 then
+      Result := qryProgName.FieldByName('ProgNameID').AsInteger
+    else
+      Result := 0;
+    qryProgName.Active := False;
+  End;
+End;
+
+
+function TdmoUserLogInOut.ReadUserName(const UserName: string): Integer;
+begin
+  qrySysUser.Active := False;
+  qrySysUser.SQL.Clear;
+  qrySysUser.SQL.Add('Select * from tbUser WHERE UserLoginName = :p1');
+  qrySysUser.Parameters.ParamByName('p1').Value := UserName;
+  Try
+    qrySysUser.Active := True;
+  Finally
+    if qrySysUser.RecordCount = 1 then
+    Begin
+      if qrySysUser.FieldByName('UserCurrent').AsBoolean = True then
+        Result := qrySysUser.FieldByName('UserID').AsInteger
+      Else
+      Begin
+        Result := 0;
+      End;
+    End
+    Else
+      Result := 0;
+  End;
+end;
+
+
+Function TdmoUserLogInOut.GetUserRole:Integer;
+begin
+  qryUserRole.Active := False;
+  qryUserRole.SQL.Clear;
+  qryUserRole.SQL.Add('Select * From UserRole where UserRoleID = :p1');
+  qryUserRole.Parameters.ParamByName('p1').Value := UserRoleID;
+  Try
+    qryUserRole.Active := True;
+    Result := qryUserRole.FieldByName('AccessLevel').AsInteger;
+  Except
+    On e:Exception do
+    begin
+      Result := 0;
+      Information('User does not have an access level' + #10#13 + 'Exception class name = '+E.ClassName);
+      Information('Exception message = '+E.Message);
+    end;
+  End;
+end;
+
+function TdmoUserLogInOut.GetUserRoleID: Integer;
+begin
+   qryUserLog.Active := False;
+   qryUserLog.SQL.Clear;
+   qryUserLog.SQL.Add('Select * From UserLog where UserID = :p1 AND ProgNameID = :p2');
+   qryUserLog.Parameters.ParamByName('p1').Value := LogInUserID;
+   qryUserLog.Parameters.ParamByName('p2').Value := iProgNameID;
+  Try
+    qryUserLog.Active := True;
+    Result :=  qryUserLog.FieldByName('UserRoleID').AsInteger;
+  Except
+    On e:Exception do
+    begin
+      Result := 0;
+      Information('User does not have a role' + #10#13 + 'Exception class name = '+E.ClassName);
+      Information('Exception message = '+E.Message);
+    end;
+  End;
+end;
+
+Procedure TdmoUserLogInOut.SetUserLoginVariables;
+Begin
+  LoggedIn        := True;
+  LogInUserID     := qrySysUser.FieldByName('UserID').AsInteger;
+  LogInName       := qrySysUser.FieldByName('UserLoginName').AsString;
+  UserIsCurrent   := qrySysUser.FieldByName('UserCurrent').AsBoolean;
+  LogInDisplayName:= qrySysUser.FieldByName('UserDisplayName').AsString;
+  UserEmailAddress:= qrySysUser.FieldByName('UserDisplayName').AsString;
+  UserExpFormat   := qrySysUser.FieldByName('UserExpFormat').AsString;
+End;
+
+
+function TdmoUserLogInOut.ReadUserPWD(const UserName, UserPWD: string): Boolean;
+begin
+  qrySysUser.Active := False;
+  qrySysUser.SQL.Clear;
+  qrySysUser.SQL.Add('Select * from tbUser WHERE UserLoginName = :p1 AND UserPassword = :p2');
+  qrySysUser.Parameters.ParamByName('p1').Value := UserName;
+  qrySysUser.Parameters.ParamByName('p2').Value := UserPWD;
+  Try
+    qrySysUser.Active := True;
+  Finally
+    if qrySysUser.RecordCount = 1 then
+    Begin
+      if qrySysUser.FieldByName('UserCurrent').AsBoolean = True then
+      Begin
+        LogInUserID := qrySysUser.FieldByName('UserID').AsInteger;
+        UserRoleID := GetUserRoleID;
+        if UserRoleID > 0 then
+        Begin
+          UserAccessLevel := GetUserRole;
+          if UserAccessLevel > 0 then
+          Begin
+            Result := True;
+          End
+          Else
+          Begin
+            Result := False;
+          End;
+        End
+        Else
+        Begin
+          Result := False;
+        End;
+      End
+      Else
+      Begin
+        Result := False;
+      End;
+    End
+    Else
+      Result := False;
+  End;
+End;
+
+
+procedure TdmoUserLogInOut.SetdbUserLogIN;
+Var
+  s1 : String;
+begin
+  qryUserLog.Active := False;
+  s1 := 'Update UserLog set UserLoggedOn = :p1 WHERE '
+                    + 'UserID = ' + IntToStr(LogInUserID) + ' AND '
+                    + 'PrognameID = ' + IntToStr(iProgNameID);
+  qryUserLog.SQL.Clear;
+  qryUserLog.SQL.Add(s1);
+  qryUserLog.Parameters.ParamByName('p1').Value := Date();
+  TRY
+    qryUserLog.ExecSQL;
+  Except
+    On e:Exception do
+    Begin
+      Information('User does not have a role for this programme' + #10#13 + 'Exception class name = '+E.ClassName);
+      Information('Exception message = '+E.Message);
+    End;
+  END;
+  qryUserLog.Active := False;
+end;
+
+
+procedure TdmoUserLogInOut.SetdbUserLogOUT;
+Var
+  s1 : String;
+begin
+  qryUserLog.Active := False;
+  s1 := 'Update UserLog set UserLastLogon = UserLoggedOn, UserLoggedOn = :p1 WHERE '
+                    + 'UserID = ' + IntToStr(LogInUserID) + ' AND '
+                    + 'PrognameID = ' + IntToStr(iProgNameID);
+  qryUserLog.SQL.Clear;
+  qryUserLog.SQL.Add(s1);
+  qryUserLog.Parameters.ParamByName('p1').Value := StrToDate('01/01/1900');
+  TRY
+    qryUserLog.ExecSQL;
+  Except
+    On e:Exception do
+    Begin
+      Information('User does not have a role for this programme' + #10#13 + 'Exception class name = '+E.ClassName);
+      Information('Exception message = '+E.Message);
+    End;
+  END;
+  qryUserLog.Active := False;
+end;
+
+
+Procedure TdmoUserLogInOut.SetUserLoggedIn(bLoggedIn : Boolean);
+Begin
+  if bLoggedIn then
+  Begin
+    SetUserLoginVariables;
+  {
+    UserLoginVariables
+
+    LoggedIn        := True;
+    LogInUserID     := qrySysUser.FieldByName('UserID').AsInteger;
+    LogInName       := qrySysUser.FieldByName('UserLoginName').AsString;
+    UserIsCurrent   := qrySysUser.FieldByName('UserCurrent').AsBoolean;
+    LogInDisplayName:= qrySysUser.FieldByName('UserDisplayName').AsString;
+    UserEmailAddress:= qrySysUser.FieldByName('UserDisplayName').AsString;
+    UserExpFormat   := qrySysUser.FieldByName('UserExpFormat').AsString;
+  }
+    SetdbUserLogIN;
+  End
+  Else
+  Begin
+    LoggedIn := False;
+    SetdbUserLogOUT;
+  End;
+end;
+
+
+
+end.

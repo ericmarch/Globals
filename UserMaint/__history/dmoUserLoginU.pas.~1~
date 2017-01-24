@@ -1,0 +1,27 @@
+unit dmoUserLoginU;
+
+interface
+
+uses
+  System.SysUtils, System.Classes, Data.DB, Data.Win.ADODB;
+
+type
+  TdmoUserLogin = class(TDataModule)
+    dmoUserMaint: TADOQuery;
+    qryUserLog: TADOQuery;
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  dmoUserLogin: TdmoUserLogin;
+
+implementation
+
+{%CLASSGROUP 'Vcl.Controls.TControl'}
+
+{$R *.dfm}
+
+end.

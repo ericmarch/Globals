@@ -1,0 +1,15 @@
+object dmoUserLogin: TdmoUserLogin
+  OldCreateOrder = False
+  Height = 311
+  Width = 432
+  object dmoUserMaint: TADOQuery
+    Parameters = <>
+    Left = 136
+    Top = 112
+  end
+  object qryUserLog: TADOQuery
+    Parameters = <>
+    Left = 288
+    Top = 112
+  end
+end

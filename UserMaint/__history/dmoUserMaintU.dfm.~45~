@@ -1,0 +1,75 @@
+object dmoUserMaint: TdmoUserMaint
+  OldCreateOrder = False
+  Height = 207
+  Width = 345
+  object qryUser: TADOQuery
+    Connection = dmoConnectionUser.conUserMaint
+    CursorType = ctStatic
+    AfterScroll = qryUserAfterScroll
+    Parameters = <>
+    SQL.Strings = (
+      'Select * From tbUser')
+    Left = 112
+    Top = 24
+  end
+  object qryUserRole: TADOQuery
+    Active = True
+    Connection = dmoConnectionUser.conUserMaint
+    CursorType = ctStatic
+    Parameters = <>
+    SQL.Strings = (
+      'Select * FROM UserRole')
+    Left = 192
+    Top = 24
+  end
+  object qryProgName: TADOQuery
+    Connection = dmoConnectionUser.conUserMaint
+    CursorType = ctStatic
+    AfterScroll = qryProgNameAfterScroll
+    Parameters = <>
+    SQL.Strings = (
+      'Select * From Progname')
+    Left = 32
+    Top = 24
+  end
+  object ADOQuery1: TADOQuery
+    Connection = dmoConnectionUser.conUserMaint
+    Parameters = <>
+    Left = 32
+    Top = 136
+  end
+  object qryMenuItems: TADOQuery
+    Connection = dmoConnectionUser.conUserMaint
+    CursorType = ctStatic
+    AfterRefresh = qryMenuItemsAfterRefresh
+    Parameters = <>
+    SQL.Strings = (
+      
+        'SELECT     dbo.MenuItem.MenuItemID, dbo.MenuItem.ProgNameID, dbo' +
+        '.MenuItem.MaxAcceccLevel, dbo.MenuItem.Description AS MenuItemDe' +
+        'sc, dbo.MenuItem.MenuCode, '
+      '                      dbo.ProgName.Description AS ProgNameDesc'
+      'FROM         dbo.MenuItem LEFT OUTER JOIN'
+      
+        '                      dbo.ProgName ON dbo.MenuItem.ProgNameID = ' +
+        'dbo.ProgName.ProgNameID')
+    Left = 32
+    Top = 80
+  end
+  object ADOCommand1: TADOCommand
+    Connection = dmoConnectionUser.conUserMaint
+    Parameters = <>
+    Left = 144
+    Top = 136
+  end
+  object qryUserLog: TADOQuery
+    Active = True
+    Connection = dmoConnectionUser.conUserMaint
+    CursorType = ctStatic
+    Parameters = <>
+    SQL.Strings = (
+      'Select * From UserLog')
+    Left = 272
+    Top = 24
+  end
+end

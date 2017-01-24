@@ -1,0 +1,80 @@
+object dlgLogin: TdlgLogin
+  Left = 100
+  Top = 100
+  Caption = 'Login'
+  ClientHeight = 200
+  ClientWidth = 288
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  OldCreateOrder = False
+  Position = poDesigned
+  OnCreate = FormCreate
+  PixelsPerInch = 96
+  TextHeight = 13
+  object edtUserName: TEdit
+    Left = 80
+    Top = 48
+    Width = 121
+    Height = 21
+    TabOrder = 0
+    OnChange = edtUserNameChange
+  end
+  object edtPassword: TEdit
+    Left = 80
+    Top = 92
+    Width = 121
+    Height = 21
+    PasswordChar = '*'
+    TabOrder = 1
+    OnChange = edtPasswordChange
+    OnEnter = edtPasswordEnter
+  end
+  object Panel1: TPanel
+    Left = 0
+    Top = 159
+    Width = 288
+    Height = 41
+    Align = alBottom
+    TabOrder = 2
+    object btnOK: TBitBtn
+      Left = 24
+      Top = 8
+      Width = 75
+      Height = 25
+      Enabled = False
+      Kind = bkOK
+      NumGlyphs = 2
+      TabOrder = 0
+      OnClick = btnOKClick
+    end
+    object btnCancel: TBitBtn
+      Left = 152
+      Top = 8
+      Width = 75
+      Height = 25
+      Kind = bkCancel
+      NumGlyphs = 2
+      TabOrder = 1
+    end
+  end
+  object txtUser: TStaticText
+    Left = 48
+    Top = 48
+    Width = 26
+    Height = 17
+    Caption = 'User'
+    TabOrder = 3
+  end
+  object txtPassword: TStaticText
+    Left = 24
+    Top = 96
+    Width = 50
+    Height = 17
+    Caption = 'Password'
+    TabOrder = 4
+  end
+end

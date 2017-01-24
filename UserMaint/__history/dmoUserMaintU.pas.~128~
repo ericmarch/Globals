@@ -1,0 +1,347 @@
+unit dmoUserMaintU;
+
+interface
+
+uses
+  System.SysUtils, System.Classes, Data.DB, Data.Win.ADODB;
+
+type
+  TdmoUserMaint = class(TDataModule)
+    qryUser: TADOQuery;
+    qryUserRole: TADOQuery;
+    qryProgName: TADOQuery;
+    ADOQuery1: TADOQuery;
+    qryMenuItems: TADOQuery;
+    ADOCommand1: TADOCommand;
+    qryUserLog: TADOQuery;
+    qryAccessLevel: TADOQuery;
+    Function  OpenQueryPrograme:Integer;
+    Function  OpenQueryUser: Integer;
+    Function  GetUserRoleID(TheUserID : Integer): Integer;
+    Procedure OpenQueryUserRole;
+    Procedure OpenQueryMenuItems;
+    Function  AddNewProg(TheName : String) : Integer;
+    Procedure DeleteProg;
+    Procedure AddUser(sUserName, sUserFullName, sUserPassword, sUserEmail: String; theRoleID: Integer);
+    Procedure DeleteUser;
+    Procedure qryMenuItemsAfterRefresh(DataSet: TDataSet);
+    Procedure qryProgNameAfterScroll(DataSet: TDataSet);
+    procedure qryMenuItemsBeforePost(DataSet: TDataSet);
+  private
+    { Private declarations }
+    Procedure GetCurrentUserRoleDetail;
+    Function  ExistsProgName(TheName: String):Boolean;
+    Function  GetID(tbIDname, tbName : String): Integer;
+  public
+    { Public declarations }
+  End;
+
+var
+  dmoUserMaint: TdmoUserMaint;
+
+implementation
+
+{%CLASSGROUP 'Vcl.Controls.TControl'}
+
+uses DmoConnectionUserU, globals;
+
+{$R *.dfm}
+
+{ TdmoUserMaint }
+
+
+Function TdmoUserMaint.AddNewProg(TheName: String): Integer;
+Var
+  itbID : Integer;
+Begin
+  TheName := ReplaceCharinStr(TheName, ' ', '');
+  if ExistsProgName(TheName) then
+  Begin
+    Result := -1;
+    Error('Programme name already exists');
+  End
+  Else
+  Begin
+    qryProgName.Active := False;
+    qryProgName.SQL.Clear;
+    qryProgName.SQL.Add('Insert Into ProgName (ProgNameID, Description) Values ( :p1, :p2)');
+    result := 0;
+    itbID := GetID('ProgNameID', 'ProgName');
+    if itbID > -1 then
+    Begin
+      itbID := itbID + 1;
+      qryProgName.Parameters.ParamByName('p1').Value := itbID;
+      qryProgName.Parameters.ParamByName('p2').Value := TheName;
+    End;
+    Try
+      qryProgName.ExecSQL;
+      result := itbID;
+    Except
+      On E: Exception Do
+      Begin
+        Error('Error raised writing programme name to database');
+        Error('Exception class name = '+E.ClassName);
+        Error('Exception message = '+E.Message);
+      End;
+    End;
+  End;
+End;
+
+
+Procedure TdmoUserMaint.AddUser(sUserName, sUserFullName, sUserPassword, sUserEmail: String; theRoleID: Integer);
+Var
+  s1 : String;
+Begin
+  LogInUserID := GetID('UserID', 'tbUser') + 1;
+  s1 := 'INSERT INTO tbUser (UserID, UserLoginName, UserPassword, '
+       + 'UserCurrent, UserDisplayName, UserEmailAddress) '
+       + 'VALUES (' + IntToStr(LogInUserID)+', ' + quotedStr(sUserName) + ', ' + QuotedStr(sUserPassword) + ', '
+       + '1, ' + QuotedStr(sUserFullName) + ', ' + quotedStr(sUserEmail) + ')';
+  ADOCommand1.CommandText := s1;
+  ADOCommand1.Execute;
+  UserLogID := GetID('UserLogID', 'UserLog') + 1;
+  s1 := 'INSERT INTO UserLog (UserLogID, UserRoleID, ProgNameID, UserID) '
+       + 'VALUES (' + IntToStr(UserLogID)+', ' + IntToStr(theRoleID) + ', '
+       + IntToStr(iProgNameID) + ', ' + IntToStr(LogInUserID) + ')';
+  ADOCommand1.CommandText := s1;
+  ADOCommand1.Execute;
+End;
+
+
+Procedure TdmoUserMaint.DeleteProg;
+Var
+  TheID : Integer;
+Begin
+  TheID := qryProgName.FieldByName('ProgNameID').AsInteger;
+  ADOCommand1.CommandText := 'Delete From MenuItem Where ProgNameID = ' + IntToStr(TheID);
+  ADOCommand1.Execute;
+  ADOCommand1.CommandText := 'Delete From UserLog Where ProgNameID = ' + IntToStr(TheID);
+  ADOCommand1.Execute;
+  ADOCommand1.CommandText := 'Delete From ProgName Where ProgNameID = ' + IntToStr(TheID);
+  ADOCommand1.Execute;
+end;
+
+
+Procedure TdmoUserMaint.DeleteUser;
+Var
+  TheID : Integer;
+Begin
+  TheID := qryUser.FieldByName('UserID').AsInteger;
+  ADOCommand1.CommandText := 'Delete From UserLog Where UserID = ' + IntToStr(TheID);
+  ADOCommand1.Execute;
+  ADOCommand1.CommandText := 'Delete From tbUser Where UserID = ' + IntToStr(TheID);
+  ADOCommand1.Execute;
+  LogInUserID := OpenQueryUser;
+  OpenQueryUserRole;
+End;
+
+function TdmoUserMaint.ExistsProgName(TheName: String): Boolean;
+Begin
+  Result := False;
+  ADOQuery1.Active := False;
+  ADOQuery1.SQL.Clear;
+  ADOQuery1.SQL.Add('Select * from Progname Where Description = ' + quotedStr(TheName));
+  Try
+    ADOQuery1.Active := True;
+    if ADOQuery1.RecordCount = 1 then
+      Result := True;
+  Finally
+    ADOQuery1.Active := False;
+  End;
+End;
+
+
+function TdmoUserMaint.GetID(tbIDname, tbName: String): Integer;
+Var
+  ii : Integer;
+  s1 : String;
+Begin
+  adoQuery1.Active := False;
+  adoQuery1.SQL.Clear;
+  s1 := 'Select TOP 1 ' + tbIDname + ' from ' + tbName + ' Order By ' + tbIDname;
+  adoQuery1.SQL.Add('Select TOP 1 ' + tbIDname + ' from ' + tbName + ' Order By ' + tbIDname + ' DESC');
+  Try
+    adoQuery1.Active := True;
+    ii := ADOQuery1.RecordCount;
+    s1 := QuotedStr(tbIDname);
+    Result := ADOQuery1.FieldByName(tbIDname).AsInteger;
+  Except
+    On E: Exception Do
+    Begin
+      Result := -1;
+      Error('Exception class name = '+E.ClassName);
+      Error('Exception message = '+E.Message);
+    End;
+  End;
+End;
+
+
+Function TdmoUserMaint.OpenQueryPrograme:Integer;
+Begin
+  qryProgName.Active := False;
+  qryProgName.SQL.Clear;
+  qryProgName.SQL.Add('Select * From ProgName');
+  Result := 0;
+  Try
+    qryProgName.Active := True;
+    if qryProgName.RecordCount > 0 then
+      Result := qryProgName.FieldByName('ProgNameID').AsInteger;
+  Except
+  On E: Exception Do
+    Begin
+      Error('Error opening ProgName table');
+      Error('Exception class name = '+E.ClassName);
+      Error('Exception message = '+E.Message);
+    End;
+  End;
+End;
+
+
+Procedure TdmoUserMaint.GetCurrentUserRoleDetail;
+Var
+  s1 : String;
+Begin
+  qryAccessLevel.Active := False;
+  qryAccessLevel.SQL.Clear;
+  s1 := 'Select UserRoleID, Description, AccessLevel From UserRole '
+      + ' Where UserRoleID = ' + IntToStr(UserRoleID);
+  qryAccessLevel.SQL.Add(s1);
+  Try
+    qryAccessLevel.Active := True;
+    UserAccessLevel := qryAccessLevel.FieldByName('AccessLevel').AsInteger;
+    UserAccessName := qryAccessLevel.FieldByName('Description').AsString;
+  Except
+  On E: Exception Do
+    Begin
+      s1 := 'Error opening UserRole table'
+           + CRLF
+           + 'Exception class name = '+E.ClassName
+           + CRLF
+           + 'Exception message =    '+E.Message;
+      Error(s1);
+    End;
+  End;
+End;
+
+
+Function TdmoUserMaint.GetUserRoleID(TheUserID : Integer): Integer;
+Var
+  s1 : String;
+Begin
+  qryUserLog.Active := False;
+  qryUserLog.SQL.Clear;
+  s1 := 'Select UserLogID, UserRoleID, ProgNameID, UserID From UserLog '
+       + ' Where UserID = ' + IntToStr(LogInUserID);
+  qryUserLog.SQL.Add(s1);
+  Result := 0;
+  Try
+    qryUserLog.Active := True;
+    Result := qryUserLog.FieldByName('UserRoleID').AsInteger;
+    GetCurrentUserRoleDetail;
+  Except
+  On E: Exception Do
+    Begin
+      s1 := 'Error opening UserLog table'
+           + CRLF
+           + 'Exception class name = '+E.ClassName
+           + CRLF
+           + 'Exception message =    '+E.Message;
+      Error(s1);
+    End;
+  End;
+End;
+
+
+
+Function  TdmoUserMaint.OpenQueryUser: Integer;
+Begin
+  qryUser.Active := False;
+  qryUser.SQL.Clear;
+  qryUser.SQL.Add('Select * From tbUser');
+  Result := 0;
+  Try
+    qryUser.Active := True;
+    Result := qryUser.FieldByName('UserID').AsInteger;
+    GetUserRoleID(Result);
+    GetCurrentUserRoleDetail;
+  Except
+  On E: Exception Do
+    Begin
+      Error('Error opening User table');
+      Error('Exception class name = '+E.ClassName);
+      Error('Exception message = '+E.Message);
+    End;
+  End;
+End;
+
+
+Procedure TdmoUserMaint.OpenQueryUserRole;
+Var
+  s1 : String;
+Begin
+  qryUserRole.Active := False;
+  qryUserRole.SQL.Clear;
+  qryUserRole.SQL.Add('Select * From UserRole');
+  Try
+    qryUserRole.Active := True;
+  Except
+  On E: Exception Do
+    Begin
+      s1 := 'Error opening UserRole table'
+           + CRLF
+           + 'Exception class name = '+E.ClassName
+           + CRLF
+           + 'Exception message =    '+E.Message;
+      Error(s1);
+    End;
+  End;
+End;
+
+
+Procedure TdmoUserMaint.OpenQueryMenuItems;
+Var
+  s1 : String;
+Begin
+  qryMenuItems.Active := False;
+  qryMenuItems.SQL.Clear;
+
+  s1 := 'SELECT * FROM MenuItem Where ProgNameID = '
+       + IntToStr(iProgNameID);
+
+  qryMenuItems.SQL.Add(s1);
+  Try
+    qryMenuItems.Active := True;
+  Except
+  On E: Exception Do
+    Begin
+      Error('Error opening Menu Items');
+      Error('Exception class name = '+E.ClassName);
+      Error('Exception message = '+E.Message);
+    End;
+  End;
+End;
+
+
+Procedure TdmoUserMaint.qryMenuItemsAfterRefresh(DataSet: TDataSet);
+Begin
+  OpenQueryMenuItems;
+End;
+
+
+procedure TdmoUserMaint.qryMenuItemsBeforePost(DataSet: TDataSet);
+Var
+  FtheID : Integer;
+begin
+  FtheID := GetID('MenuItemID', 'MenuItem') + 1;
+  qryMenuItems.FieldByName('MenuItemID').AsInteger := FtheID;
+  qryMenuItems.FieldByName('ProgNameID').AsInteger := iProgNameID;
+end;
+
+Procedure TdmoUserMaint.qryProgNameAfterScroll(DataSet: TDataSet);
+Begin
+  iProgNameID := qryProgName.FieldByName('ProgNameID').AsInteger;
+  OpenQueryMenuItems;
+End;
+
+
+End.

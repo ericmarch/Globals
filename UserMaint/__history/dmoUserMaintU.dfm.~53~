@@ -1,0 +1,70 @@
+object dmoUserMaint: TdmoUserMaint
+  OldCreateOrder = False
+  Height = 207
+  Width = 345
+  object qryUser: TADOQuery
+    Connection = dmoConnectionUser.conUserMaint
+    CursorType = ctStatic
+    Parameters = <>
+    SQL.Strings = (
+      'Select * From tbUser')
+    Left = 112
+    Top = 24
+  end
+  object qryUserRole: TADOQuery
+    Connection = dmoConnectionUser.conUserMaint
+    CursorType = ctStatic
+    Parameters = <>
+    SQL.Strings = (
+      'Select * FROM UserRole')
+    Left = 192
+    Top = 24
+  end
+  object qryProgName: TADOQuery
+    Connection = dmoConnectionUser.conUserMaint
+    CursorType = ctStatic
+    Parameters = <>
+    SQL.Strings = (
+      'Select * From Progname')
+    Left = 32
+    Top = 24
+  end
+  object ADOQuery1: TADOQuery
+    Connection = dmoConnectionUser.conUserMaint
+    Parameters = <>
+    Left = 32
+    Top = 136
+  end
+  object qryMenuItems: TADOQuery
+    Connection = dmoConnectionUser.conUserMaint
+    CursorType = ctStatic
+    BeforePost = qryMenuItemsBeforePost
+    AfterRefresh = qryMenuItemsAfterRefresh
+    Parameters = <>
+    SQL.Strings = (
+      'SELECT    * FROM MenuItem')
+    Left = 32
+    Top = 80
+  end
+  object ADOCommand1: TADOCommand
+    Connection = dmoConnectionUser.conUserMaint
+    Parameters = <>
+    Left = 144
+    Top = 136
+  end
+  object qryUserLog: TADOQuery
+    Connection = dmoConnectionUser.conUserMaint
+    CursorType = ctStatic
+    Parameters = <>
+    SQL.Strings = (
+      'Select * From UserLog')
+    Left = 272
+    Top = 24
+  end
+  object qryAccessLevel: TADOQuery
+    Connection = dmoConnectionUser.conUserMaint
+    Parameters = <>
+    Left = 111
+    Top = 78
+  end
+end

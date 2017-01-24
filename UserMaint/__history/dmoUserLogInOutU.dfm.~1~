@@ -1,0 +1,17 @@
+object dmoUserLogInOut: TdmoUserLogInOut
+  OldCreateOrder = False
+  Height = 311
+  Width = 432
+  object qrySysUser: TADOQuery
+    Connection = dmoConnectionUser.conUserMaint
+    Parameters = <>
+    Left = 136
+    Top = 112
+  end
+  object qryUserLog: TADOQuery
+    Connection = dmoConnectionUser.conUserMaint
+    Parameters = <>
+    Left = 288
+    Top = 112
+  end
+end

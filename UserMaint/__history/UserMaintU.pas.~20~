@@ -1,0 +1,69 @@
+Unit UserMaintU;
+
+Interface
+Uses sysutils, forms, inifiles, classes, dialogs, Windows, System.UITypes;
+  Type TActiveWindow = Class(Tobject)
+  Private
+    //
+  Public
+    //
+  End;
+
+  Function  AddProgName(TheName : String):Integer;
+  Procedure DelProgName;
+  Procedure OpenTables;
+  Function  AddUser(FormTop, FormLeft : Integer):Boolean;
+
+Implementation
+
+Uses globals, dmoUserMaintU, frmAddUserU;
+
+
+Function  AddProgName(TheName : String):Integer;
+Begin
+  If TheName > 'A' then
+  Begin
+    Result := dmoUserMaint.AddNewProg(TheName);
+    dmoUserMaint.OpenQueryPrograme;      //  Reopen query because used in dmoUserMaint.AddNewProg
+  End
+  Else
+  Begin
+    Error('Programme name must start with a letter');
+    Result := 0;
+  End;
+End;
+
+
+Procedure DelProgName;
+Begin
+  If Question('Are you ABSOLUTELY sure') Then
+    dmoUserMaint.DeleteProg;
+End;
+
+
+Procedure OpenTables;
+Begin
+//  Beware Global Variables
+  iProgNameID := dmoUserMaint.OpenQueryPrograme;  //  Also opens menuItems Grid for selected Prog
+  LogInUserID := dmoUserMaint.OpenQueryUser;
+  dmoUserMaint.OpenQueryUserRole;   // gets 3 Global variables
+                                    // UserRoleID, UserAccessLevel, UserAccessName
+End;
+
+
+Function  AddUser(FormTop, FormLeft : Integer):Boolean;
+Begin
+  FormTop  := FormTop + 20;
+  FormLeft := FormLeft + 20;
+  frmAddUser.Top := FormTop;
+  frmAddUser.Left := FormLeft;
+//  frmAddUser.Visible := True;
+  frmAddUser.ShowModal;
+  GbUserNew := True;
+  Result := True;
+End;
+
+
+End.
+
+
