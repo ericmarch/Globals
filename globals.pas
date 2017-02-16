@@ -1,7 +1,15 @@
 unit Globals;
 
 interface
-uses sysutils, forms, inifiles, classes, dialogs, Windows, System.UITypes;
+uses sysutils,
+     forms,
+     strUtils,
+     inifiles,
+     classes,
+     dialogs,
+     Windows,
+     System.UITypes;
+
   Type TActiveWindow = Class(Tobject)
   Private
     //
@@ -15,6 +23,7 @@ uses sysutils, forms, inifiles, classes, dialogs, Windows, System.UITypes;
   Function  CalculateAge(Birthday : TDateTime):Integer;
   Function  Split(Input:String;sChar:Char; s:Integer):String;
   Function  ThousSeps(dd: Double): String;
+  Function  MyStripOut(s1: String):String;
  //-------------------------------------
 
  //MessageDlg Wrappers//
@@ -108,6 +117,10 @@ Parameters :
 
 Description:
 Uses keybd_event to manufacture a series of key events matching the passed parameters. The events go to the control with focus. Note that for characters key is always the upper-case version of the character. Sending without any modifier keys will result in a lower-case character, sending it with [ ssShift ] will result in an upper-case character!
+
+USAGE
+  PostKeyEx32(VK_DOWN,[], False);                  Down Arrow
+  PostKeyEx32(Ord('C'), [ssctrl, ssAlt], False);   Ctrl - Alt  - C
 }
 type
    TShiftKeyInfo = record
@@ -289,5 +302,18 @@ begin
   End;
   Result:= s1;
 end;
+
+Function MyStripout(s1: String):String;
+Const
+  cInvdComma = #39;
+Var
+  s2: String;
+Begin
+  s2:= AnsiReplaceStr(s1, ' ', '');
+  s1:= AnsiReplaceStr(s2, ',', '');
+  s2:= AnsiReplaceStr(s1, '"', '');
+  s2:= AnsiReplaceStr(s2, cInvdComma, '');
+  Result:= s2;
+End;
 
 End.
